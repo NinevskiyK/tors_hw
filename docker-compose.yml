@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  worker1:
+    command: ["./worker1.sh"]
+    privileged: true
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    networks:
+      - my_network
+
+  worker2:
+    privileged: true
+    command: ["./worker2.sh"]
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    networks:
+      - my_network
+
+  worker3:
+    privileged: true
+    command: ["./worker3.sh"]
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    networks:
+      - my_network
+
+  coordinator:
+    privileged: true
+    build:
+      context: .
+      dockerfile: Dockerfile.coord
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge

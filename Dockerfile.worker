@@ -1,0 +1,15 @@
+FROM ubuntu:latest
+
+RUN apt-get update && apt-get install -y \
+    g++ iptables \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY worker.cpp /app/worker.cpp
+COPY parameters.h /app/parameters.h
+RUN g++ -std=c++20 /app/worker.cpp -o /app/worker
+
+COPY worker1.sh /app/worker1.sh
+COPY worker2.sh /app/worker2.sh
+COPY worker3.sh /app/worker3.sh
+
+WORKDIR /app
