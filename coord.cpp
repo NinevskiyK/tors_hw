@@ -1,7 +1,6 @@
 #include <chrono>
 #include <cstdio>
 #include <cstring>
-#include <iomanip>
 #include <iostream>
 #include <map>
 #include <optional>
@@ -50,13 +49,10 @@ void broadcast_ip() {
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
-
-    close(sock);
 }
 
 /// EPOLL
 
-const int MAX_EVENTS = 10;
 int epollfd = 0;
 
 void add_to_epoll(int sock) {
@@ -71,7 +67,7 @@ void add_to_epoll(int sock) {
 
 void turn_all(int sock) {
     epoll_event ev;
-    ev.events = EPOLLERR | EPOLLHUP;
+    ev.events = EPOLLOUT | EPOLLIN | EPOLLERR | EPOLLHUP;
     ev.data.fd = sock;
     if (epoll_ctl(epollfd, EPOLL_CTL_MOD, sock, &ev) == -1) {
         perror("epoll_ctl");
@@ -81,7 +77,7 @@ void turn_all(int sock) {
 
 void turn_only_errors(int sock) {
     epoll_event ev;
-    ev.events = EPOLLOUT | EPOLLIN | EPOLLERR | EPOLLHUP;
+    ev.events = EPOLLERR | EPOLLHUP;
     ev.data.fd = sock;
     if (epoll_ctl(epollfd, EPOLL_CTL_MOD, sock, &ev) == -1) {
         perror("epoll_ctl");
@@ -112,40 +108,32 @@ int create_epoll(int listen_sock) {
 */
 std::map<int, int> worker2task;
 std::map<int, std::chrono::time_point<std::chrono::steady_clock>> worker2task_time;
-std::map<int, std::string> worker2buffer;
-std::map<int, std::string> worker2write_buffer;
+std::map<int, std::string> worker2buffer; // read buffers
+std::map<int, std::string> worker2write_buffer; // write buffers
+std::unordered_set<int> relaxed; // workers without task
+
 std::stack<int> tasks;
-std::unordered_set<int> relaxed;
 
 int sum = 0;
 
-std::optional<int> get_task_for_worker(int sock) {
+void check_for_end() {
     if (tasks.empty() && worker2task.empty()) {
         std::cout << "ANS: " << sum;
         exit(0);
     }
+}
+
+std::optional<int> get_task_for_worker(int sock) {
     if (tasks.empty()) {
         return std::nullopt;
     }
     int task = tasks.top();
     tasks.pop();
-    worker2task[sock] = task;
-    worker2task_time[sock] = std::chrono::steady_clock::now();
     return task;
 }
 
-void give_new_task(int sock);
-
-void readd_task(int task) {
-    tasks.push(task);
-    if (!relaxed.empty()) {
-        turn_all(*relaxed.begin());
-        give_new_task(*relaxed.begin());
-        relaxed.erase(relaxed.begin());
-    }
-}
-
 void relax(int sock) {
+    std::cout << "relaxed: " << sock << std::endl;
     relaxed.insert(sock);
     turn_only_errors(sock);
 }
@@ -154,6 +142,7 @@ void give_new_task(int sock) {
     if (worker2task.count(sock)) {
         worker2task.erase(sock);
     }
+
     auto task_or_nullopt = get_task_for_worker(sock);
     if (!task_or_nullopt.has_value()) {
         relax(sock);
@@ -161,10 +150,23 @@ void give_new_task(int sock) {
     }
 
     int task = task_or_nullopt.value();
+
+    worker2task[sock] = task;
     worker2write_buffer[sock] = std::to_string(task) + '|';
+    worker2task_time[sock] = std::chrono::steady_clock::now();
+
     std::cout << "Message for worker" << sock << ": " << worker2write_buffer[sock] << std::endl;
 }
 
+void readd_task(int task) {
+    tasks.push(task);
+    if (!relaxed.empty()) {
+        std::cout << "moved from relaxed: " << *relaxed.begin() << std::endl;
+        turn_all(*relaxed.begin());
+        give_new_task(*relaxed.begin());
+        relaxed.erase(relaxed.begin());
+    }
+}
 
 void new_worker(int listen_sock) {
     sockaddr addr;
@@ -175,8 +177,8 @@ void new_worker(int listen_sock) {
         return;
     }
 
-    add_to_epoll(conn_sock);
     std::cout << "New worker: " << conn_sock << std::endl;
+    add_to_epoll(conn_sock);
     give_new_task(conn_sock);
 }
 
@@ -281,7 +283,6 @@ void kick_inactive() {
     }
 }
 
-
 void parse_message(int sock) {
     auto sep = worker2buffer[sock].find('&');
     if (sep == std::string::npos) {
@@ -295,8 +296,7 @@ void parse_message(int sock) {
     if (worker2task[sock] != std::stoi(task)) {
         std::cout << "got ans {" << ans << "} from wrong task {" << task << "} from worker {" << sock << "} with task {" << worker2task[sock] << "}" << std::endl;
     } else {
-        int res = std::stoi(ans);
-        sum += res;
+        sum += std::stoi(ans);
     }
 }
 
@@ -320,6 +320,7 @@ void read_from(int sock) {
     if (buffer[bytes_received - 1] == '|') {
         parse_message(sock);
         give_new_task(sock);
+        check_for_end();
     }
 }
 

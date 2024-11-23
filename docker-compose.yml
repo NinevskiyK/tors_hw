@@ -39,3 +39,6 @@ services:
 networks:
   my_network:
     driver: bridge
+    name: mybr0
+    driver_opts:
+      com.docker.network.bridge.name: mybr0

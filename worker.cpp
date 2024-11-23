@@ -19,8 +19,10 @@
 
 int sock;
 int udp_sock;
+
 sockaddr_in connect_to_server() {
     std::cout << "start connecting..." << std::endl;
+
     udp_sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (udp_sock == -1) {
         perror("socket");
@@ -131,28 +133,6 @@ void work(sockaddr_in tcp_addr) {
         perror("socket");
         throw std::runtime_error("socket");
     }
-    int keepIdle = 2;
-    int keepInterval = 2;
-    int keepCount = 3;
-
-    if (setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &keepIdle, sizeof(keepIdle)) == -1) {
-        perror("setsockopt");
-        close(sock);
-        throw std::runtime_error("socket2");
-    }
-
-    if (setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &keepInterval, sizeof(keepInterval)) == -1) {
-        perror("setsockopt");
-        close(sock);
-        throw std::runtime_error("socket3");
-    }
-
-    if (setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &keepCount, sizeof(keepCount)) == -1) {
-        perror("setsockopt");
-        close(sock);
-        throw std::runtime_error("socket4");
-    }
-
 
     if (connect(sock, (struct sockaddr*)&tcp_addr, sizeof(tcp_addr)) == -1) {
         perror("connect");

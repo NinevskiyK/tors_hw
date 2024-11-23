@@ -1,7 +1,7 @@
 FROM ubuntu:latest
 
 RUN apt-get update && apt-get install -y \
-    g++ iptables \
+    g++ iptables iproute2 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY worker.cpp /app/worker.cpp

@@ -1,9 +1,13 @@
 #!/bin/sh
- ./worker &
- sleep 5
- echo "START DROP"
+./worker &
 
- iptables -A INPUT -m statistic --mode random --probability 0.5 -j DROP
-#  iptables -A OUTPUT -m statistic --mode random --probability 1 -j DROP
+sleep 1
+echo "START DROP"
 
- tail -f /dev/null
+# tc qdisc add dev eth0 root netem loss random 10%
+# tc qdisc add dev eth0 root netem delay 1000ms
+# tc qdisc add dev eth0 root netem duplicate 10%
+tc qdisc add dev eth0 root netem delay 1000ms reorder 25% 50%
+
+
+tail -f /dev/null
