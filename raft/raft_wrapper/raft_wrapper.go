@@ -21,7 +21,6 @@ func HeartBeatGetter(wg *sync.WaitGroup) {
 		ctx, cancel := context.WithCancel(context.Background())
 		heartbeatTimeout := rand.IntN(state.HeartbeatTimeoutMax-state.HeartbeatTimeoutMin) + state.HeartbeatTimeoutMin
 		timer := time.AfterFunc(time.Duration(heartbeatTimeout)*time.Millisecond, func() {
-			log.Println("Heartbeat timeout! No signal received.")
 			cancel()
 		})
 
@@ -31,8 +30,7 @@ func HeartBeatGetter(wg *sync.WaitGroup) {
 			timer.Stop()
 			cancel()
 		case <-ctx.Done():
-			raft_main.StartElection()
-			return
+			go raft_main.StartElection()
 		}
 	}
 }

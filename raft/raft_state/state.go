@@ -76,8 +76,8 @@ var Num2server_raft map[int]string
 var Num2server_http map[int]string
 var LeaderNum int
 
-const HeartbeatTimeoutMin = 1000
-const HeartbeatTimeoutMax = 2000
+const HeartbeatTimeoutMin = 2000
+const HeartbeatTimeoutMax = 4000
 
 func InitEnv() {
 	me, err := strconv.Atoi(os.Getenv("ME"))

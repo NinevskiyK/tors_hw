@@ -70,9 +70,10 @@ func ReplicateLogOne(index int, ch chan bool, times int) {
 			return
 		}
 		times += 1
-		state.State.VolatileLeaderState.NextIndex[index] = match_index - 1
+		state.State.VolatileLeaderState.NextIndex[index] -= 1
 		log.Printf("Server %v has wrong entry at %v, continue..", index, state.State.VolatileLeaderState.NextIndex[index])
 		state.State.Mu.Unlock()
+		time.Sleep(time.Millisecond * (state.HeartbeatTimeoutMin / 4))
 	}
 }
 

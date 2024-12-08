@@ -14,8 +14,8 @@ func HandleRequestVoteReq(req rpc.RequestVoteReq) rpc.RequestVoteRes {
 	defer state.State.Mu.Unlock()
 
 	voted := false
-	if req.Term > state.State.PersistentState.CurrentTerm {
-		if state.State.PersistentState.VotedFor == -1 || state.State.PersistentState.VotedFor == req.CandidateId {
+	if req.Term >= state.State.PersistentState.CurrentTerm {
+		if req.Term > state.State.PersistentState.CurrentTerm || state.State.PersistentState.VotedFor == -1 || state.State.PersistentState.VotedFor == req.CandidateId {
 			my_last_index := len(state.State.PersistentState.Log)
 			my_last_term := 0
 			if my_last_index > 0 {
@@ -25,12 +25,16 @@ func HandleRequestVoteReq(req rpc.RequestVoteReq) rpc.RequestVoteRes {
 			if my_last_term < req.LastLogTerm || (my_last_term == req.LastLogTerm && my_last_index <= req.LastLogIndex) {
 				raft_main.ConvertToFollower(req.Term)
 				state.State.PersistentState.VotedFor = req.CandidateId
+				state.State.PersistentState.CurrentTerm = req.Term
 				state.WritePersState(state.State.PersistentState)
 				voted = true
 			}
 		}
 	}
 
+	if voted {
+		state.HeartbeatChan <- struct{}{}
+	}
 	resBody := rpc.RequestVoteRes{
 		Term:        state.State.PersistentState.CurrentTerm,
 		VoteGranted: voted,
