@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  server1:
+    build: .
+    container_name: server1
+    environment:
+      - ME=0
+      - SERVER_NUM=3
+      - SERVERS_RAFT=server1:${RAFT_PORT1},server2:${RAFT_PORT2},server3:${RAFT_PORT3}
+      - SERVERS_HTTP=server1:${HTTP_PORT1},server2:${HTTP_PORT2},server3:${HTTP_PORT3}
+      - IP=server1
+      - HTTP_PORT=${HTTP_PORT1}
+      - RAFT_PORT=${RAFT_PORT1}
+    ports:
+      - "${HTTP_PORT1}:${HTTP_PORT1}"
+      - "${RAFT_PORT1}:${RAFT_PORT1}"
+    env_file:
+      - .env
+
+  server2:
+    build: .
+    container_name: server2
+    environment:
+      - ME=1
+      - SERVER_NUM=3
+      - SERVERS_RAFT=server1:${RAFT_PORT1},server2:${RAFT_PORT2},server3:${RAFT_PORT3}
+      - SERVERS_HTTP=server1:${HTTP_PORT1},server2:${HTTP_PORT2},server3:${HTTP_PORT3}
+      - IP=server2
+      - HTTP_PORT=${HTTP_PORT2}
+      - RAFT_PORT=${RAFT_PORT2}
+    ports:
+      - "${HTTP_PORT2}:${HTTP_PORT2}"
+      - "${RAFT_PORT2}:${RAFT_PORT2}"
+    env_file:
+      - .env
+
+  server3:
+    build: .
+    container_name: server3
+    environment:
+      - ME=2
+      - SERVER_NUM=3
+      - SERVERS_RAFT=server1:${RAFT_PORT1},server2:${RAFT_PORT2},server3:${RAFT_PORT3}
+      - SERVERS_HTTP=server1:${HTTP_PORT1},server2:${HTTP_PORT2},server3:${HTTP_PORT3}
+      - IP=server3
+      - HTTP_PORT=${HTTP_PORT3}
+      - RAFT_PORT=${RAFT_PORT3}
+    ports:
+      - "${HTTP_PORT3}:${HTTP_PORT3}"
+      - "${RAFT_PORT3}:${RAFT_PORT3}"
+    env_file:
+      - .env
