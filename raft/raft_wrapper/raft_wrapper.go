@@ -44,6 +44,7 @@ func ServeRPC(wg *sync.WaitGroup) {
 
 	http.HandleFunc("/request-vote", raft_response.RequestVoteHandler)
 	http.HandleFunc("/append-entries", raft_response.AppendEntriesHandler)
+	http.HandleFunc("/request-read/", raft_response.ReadHandler)
 
 	log.Printf("Starting raft RPC Server at http://%s\n", address)
 	if err := http.ListenAndServe(address, nil); err != nil {

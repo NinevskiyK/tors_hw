@@ -5,4 +5,4 @@ COPY . .
 
 RUN go build -o server .
 
-CMD ["sh", "-c", "while true; do ./server; done"]
+CMD ["sh", "-c", "while true; do ./server && sleep 5; done"]

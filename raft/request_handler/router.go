@@ -1,6 +1,7 @@
 package request_handler
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -10,6 +11,7 @@ func Router(w http.ResponseWriter, r *http.Request) {
 	uuid := strings.TrimPrefix(r.URL.Path, "/")
 	if uuid == "" {
 		http.Error(w, "UUID is required", http.StatusBadRequest)
+		log.Printf("Exiting...")
 		os.Exit(0)
 		return
 	}
