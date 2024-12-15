@@ -2,8 +2,8 @@ package request_handler
 
 import (
 	"net/http"
-	"strings"
 	"os"
+	"strings"
 )
 
 func Router(w http.ResponseWriter, r *http.Request) {
@@ -21,6 +21,8 @@ func Router(w http.ResponseWriter, r *http.Request) {
 		ReadHandler(w, r, uuid)
 	case http.MethodPut:
 		UpdateHandler(w, r, uuid)
+	case http.MethodPatch:
+		CasHandler(w, r, uuid)
 	case http.MethodDelete:
 		DeleteHandler(w, r, uuid)
 	default:

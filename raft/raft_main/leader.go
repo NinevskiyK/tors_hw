@@ -8,18 +8,22 @@ import (
 	"time"
 )
 
-func AddToLog(entry state.Log) bool {
+func AddToLog(entry state.Log) (bool, bool) {
 	state.State.Mu.Lock()
 	if state.State.Role != state.Leader {
 		state.State.Mu.Unlock()
-		return false
+		return true, false
 	}
 	entry.Term = state.State.PersistentState.CurrentTerm
 
+	index := len(state.State.PersistentState.Log)
 	state.State.PersistentState.Log = append(state.State.PersistentState.Log, entry)
 	state.WritePersState(state.State.PersistentState)
 	state.State.Mu.Unlock()
-	return ReplicateLog(8)
+	if ReplicateLog(8) {
+		return false, state.State.PersistentState.Res[index]
+	}
+	return true, false
 }
 
 // lock is already acquired

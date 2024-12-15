@@ -9,8 +9,8 @@ import (
 	state "raft/raft_state"
 )
 
-func CreateHandler(w http.ResponseWriter, r *http.Request, uuid string) {
-	log.Printf("CREATE: Resource with UUID %s\n", uuid)
+func CasHandler(w http.ResponseWriter, r *http.Request, uuid string) {
+	log.Printf("CAS: Resource with UUID %s\n", uuid)
 	if ok, addr := state.CheckIfLeader(); !ok {
 		w.WriteHeader(http.StatusFound)
 		fmt.Fprintf(w, "Contact leader: %s", addr)
@@ -22,14 +22,14 @@ func CreateHandler(w http.ResponseWriter, r *http.Request, uuid string) {
 		fmt.Fprintf(w, "Internal err: %s", body)
 		return
 	}
-	internal_err, res := raft_main.AddToLog(state.Log{Op: "Create", Uuid: uuid, Body: string(body[:]), Term: 0})
+	internal_err, res := raft_main.AddToLog(state.Log{Op: "CAS", Uuid: uuid, Body: string(body[:]), Term: 0})
 	if !internal_err {
 		if res {
-			w.WriteHeader(http.StatusCreated)
-			fmt.Fprintf(w, "Resource %s created with body %s\n", uuid, body)
+			w.WriteHeader(http.StatusAccepted)
+			fmt.Fprintf(w, "CAS ok, %s, %s", uuid, body)
 		} else {
 			w.WriteHeader(http.StatusConflict)
-			fmt.Fprintf(w, "Resource %s already exists\n", uuid)
+			fmt.Fprintf(w, "CAS didn't succeed, %s, %s", uuid, body)
 		}
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)

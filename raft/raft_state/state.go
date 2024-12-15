@@ -35,9 +35,10 @@ type Log struct {
 }
 
 type PersistentState struct {
-	CurrentTerm int   `json:"currentTerm"`
-	VotedFor    int   `json:"votedFor"`
-	Log         []Log `json:"log"`
+	CurrentTerm int    `json:"currentTerm"`
+	VotedFor    int    `json:"votedFor"`
+	Log         []Log  `json:"log"`
+	Res         []bool `json:"res"`
 }
 
 const (
