@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  replica1:
+    build: .
+    command: ["python", "main.py", "8081", "0", "http://replica2:8082", "http://replica3:8083"]
+    ports:
+      - "8081:8081"
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - my_network
+
+  replica2:
+    build: .
+    command: ["python", "main.py", "8082", "1", "http://replica1:8081", "http://replica3:8083"]
+    ports:
+      - "8082:8082"
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - my_network
+
+  replica3:
+    build: .
+    command: ["python", "main.py", "8083", "2", "http://replica1:8081", "http://replica2:8082"]
+    ports:
+      - "8083:8083"
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - my_network
+
+networks:
+  my_network:
+    driver: bridge
+    name: mybr0
+    driver_opts:
+      com.docker.network.bridge.name: mybr0
